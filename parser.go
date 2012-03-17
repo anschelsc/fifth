@@ -90,7 +90,7 @@ func parseFunc(input <-chan *token) ([]pFunc, error) {
 			ret = append(ret, pSimpleFunc(t.data))
 		case kLOpen:
 			inside, err := parseFunc(input)
-			ret = append(pLambdaFunc(inside)) // This way if there's some data it can be saved...
+			ret = append(ret, pLambdaFunc(inside)) // This way if there's some data it can be saved...
 			if err != nil {
 				return ret, err
 			}
