@@ -76,6 +76,8 @@ func lexMain(r rune, output chan<- *token) lexFunc {
 		return lexCol
 	case '\\':
 		return lexBS
+	case '#':
+		return lexComment
 	}
 	return lexBuf([]rune{r})
 }
@@ -117,4 +119,11 @@ func lexBS(r rune, output chan<- *token) lexFunc {
 	}
 	output <- &token{kBS, nil}
 	return lexMain(r, output)
+}
+
+func lexComment(r rune, _ chan<- *token) lexFunc {
+	if r == '\n' {
+		return lexMain
+	}
+	return lexComment
 }
