@@ -22,6 +22,10 @@ type pSimpleFunc string
 
 func (s pSimpleFunc) String() string { return string(s) }
 
+type pPushFunc string
+
+func (p pPushFunc) String() string { return string("\\" + p) }
+
 type pLambdaFunc []pFunc
 
 func (l pLambdaFunc) String() string {
@@ -94,9 +98,26 @@ func parseFunc(input <-chan *token) ([]pFunc, error) {
 			if err != nil {
 				return ret, err
 			}
+		case kBS:
+			next, err := parsePush(input)
+			ret = append(ret, next)
+			if err != nil {
+				return ret, err
+			}
 		default:
 			return ret, &syntaxError{"identifier or \\( or )", t.String()}
 		}
 	}
 	panic("unreachable")
+}
+
+func parsePush(input <-chan *token) (pPushFunc, error) {
+	t, ok := <- input
+	if !ok {
+		return "", &syntaxError{"identifier", "EOF"}
+	}
+	if t.k != kId {
+		return "", &syntaxError{"identifier", t.String()}
+	}
+	return pPushFunc(t.data), nil
 }
