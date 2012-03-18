@@ -43,6 +43,7 @@ type pNamedFunc struct {
 	name   string
 	inside []pFunc
 }
+
 func (p *pNamedFunc) String() string {
 	buf := new(bytes.Buffer)
 	buf.Write([]byte(p.name))
@@ -112,7 +113,7 @@ func parseFunc(input <-chan *token) ([]pFunc, error) {
 }
 
 func parsePush(input <-chan *token) (pPushFunc, error) {
-	t, ok := <- input
+	t, ok := <-input
 	if !ok {
 		return "", &syntaxError{"identifier", "EOF"}
 	}
