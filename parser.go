@@ -100,8 +100,8 @@ func parseFunc(input <-chan *token) ([]pFunc, error) {
 				return ret, err
 			}
 		case kBS:
-			next, err := parsePush(input)
-			ret = append(ret, next)
+			next, err := parseId(input)
+			ret = append(ret, pPushFunc(next))
 			if err != nil {
 				return ret, err
 			}
@@ -112,7 +112,7 @@ func parseFunc(input <-chan *token) ([]pFunc, error) {
 	panic("unreachable")
 }
 
-func parsePush(input <-chan *token) (pPushFunc, error) {
+func parseId(input <-chan *token) (string, error) {
 	t, ok := <-input
 	if !ok {
 		return "", &syntaxError{"identifier", "EOF"}
@@ -120,5 +120,5 @@ func parsePush(input <-chan *token) (pPushFunc, error) {
 	if t.k != kId {
 		return "", &syntaxError{"identifier", t.String()}
 	}
-	return pPushFunc(t.data), nil
+	return string(t.data), nil
 }
