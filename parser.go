@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"strconv"
 )
 
 type syntaxError struct {
@@ -17,6 +16,7 @@ func (e *syntaxError) Error() string {
 
 type pFunc interface {
 	String() string
+	eval() Func
 }
 
 type pSimpleFunc string
@@ -26,10 +26,6 @@ func (s pSimpleFunc) String() string { return string(s) }
 type pPushFunc string
 
 func (p pPushFunc) String() string { return string("\\" + p) }
-
-type pNum int
-
-func (n pNum) String() string { return strconv.Itoa(int(n)) }
 
 type pLambdaFunc []pFunc
 
@@ -97,11 +93,7 @@ func parseFunc(input <-chan *token) ([]pFunc, error) {
 		case kClose:
 			return ret, nil
 		case kId:
-			if i, err := strconv.Atoi(string(t.data)); err == nil {
-				ret = append(ret, pNum(i))
-			} else {
-				ret = append(ret, pSimpleFunc(t.data))
-			}
+			ret = append(ret, pSimpleFunc(t.data))
 		case kLOpen:
 			inside, err := parseFunc(input)
 			ret = append(ret, pLambdaFunc(inside)) // This way if there's some data it can be saved...
