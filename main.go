@@ -25,7 +25,6 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
-	for _, f := range ast {
-		fmt.Println(f)
-	}
+	process(ast)
+	run()
 }

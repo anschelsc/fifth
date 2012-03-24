@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -56,7 +57,12 @@ var (
 		"+": fBuiltin(func() {
 			l := len(dstack)
 			dstack[l-2] = dstack[l-1].(dNum) + dstack[l-2].(dNum)
-			dstack = dstack[:len(dstack)-1]
+			dstack = dstack[:l-1]
+		}),
+		".": fBuiltin(func() {
+			l := len(dstack)
+			fmt.Printf("%d ", dstack[l-1])
+			dstack = dstack[:l-1]
 		}),
 	}
 	names = []map[string]Func{builtins}
@@ -85,3 +91,24 @@ func (l pLambdaFunc) eval() Func {
 }
 
 func (n pNamedFunc) eval() Func { return pLambdaFunc(n.inside).eval() }
+
+func process(a AST) {
+	level := make(map[string]Func, len(a))
+	for _, v := range a {
+		level[v.name] = new(fThread)
+	}
+	names = append(names, level)
+	for _, v := range a {
+		*level[v.name].(*fThread) = v.eval().(fThread)
+	}
+}
+
+func run() {
+	rstack = rstack[:0]
+	rstack = append(rstack, lookup("main"))
+	for len(rstack) != 0 {
+		next := rstack[len(rstack)-1]
+		rstack = rstack[:len(rstack)-1]
+		next.run()
+	}
+}
