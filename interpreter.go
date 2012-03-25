@@ -18,6 +18,10 @@ var (
 	dstack []Data
 )
 
+type fNull struct{}
+
+func (_ fNull) run() {}
+
 type fBuiltin func()
 
 func (f fBuiltin) run() { f() }
@@ -83,14 +87,22 @@ func (s pSimpleFunc) eval() Func { return lookup(string(s)) }
 func (p pPushFunc) eval() Func { return fPush{dFunc{lookup(string(p))}} }
 
 func (l pLambdaFunc) eval() Func {
+	names = append(names, make(map[string]Func)) // New scope
 	compiled := make(fThread, len(l))
 	for i, v := range l {
 		compiled[i] = v.eval()
 	}
+	names = names[:len(names)-1] // End scope
 	return compiled
 }
 
 func (n pNamedFunc) eval() Func { return pLambdaFunc(n.inside).eval() }
+
+func (c pCap) eval() Func {
+	names[len(names)-1][string(c)] = fPush{dstack[len(dstack)-1]}
+	dstack = dstack[:len(dstack)-1]
+	return fNull{}
+}
 
 func process(a AST) {
 	level := make(map[string]Func, len(a))

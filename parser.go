@@ -23,6 +23,10 @@ type pSimpleFunc string
 
 func (s pSimpleFunc) String() string { return string(s) }
 
+type pCap string
+
+func (c pCap) String() string { return "@" + string(c) }
+
 type pPushFunc string
 
 func (p pPushFunc) String() string { return string("\\" + p) }
@@ -103,6 +107,12 @@ func parseFunc(input <-chan *token) ([]pFunc, error) {
 		case kBS:
 			next, err := parseId(input)
 			ret = append(ret, pPushFunc(next))
+			if err != nil {
+				return ret, err
+			}
+		case kCap:
+			next, err := parseId(input)
+			ret = append(ret, pCap(next))
 			if err != nil {
 				return ret, err
 			}
