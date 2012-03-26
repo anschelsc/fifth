@@ -95,17 +95,19 @@ func (s pSimpleFunc) eval() Func { return lookup(string(s)) }
 
 func (p pPushFunc) eval() Func { return fPush{dFunc{lookup(string(p))}} }
 
-func (l pLambdaFunc) eval() Func {
+func toThread(r []pFunc) fThread {
 	names = append(names, make(map[string]Func)) // New scope
-	compiled := make(fThread, len(l))
-	for i, v := range l {
+	compiled := make(fThread, len(r))
+	for i, v := range r {
 		compiled[i] = v.eval()
 	}
 	names = names[:len(names)-1] // End scope
 	return compiled
 }
 
-func (n pNamedFunc) eval() Func { return pLambdaFunc(n.inside).eval() }
+func (l pLambdaFunc) eval() Func { return fPush{dFunc{toThread([]pFunc(l))}} }
+
+func (n pNamedFunc) eval() Func { return toThread([]pFunc(n.inside)) }
 
 func (c pCap) eval() Func {
 	place := new(fPush)
