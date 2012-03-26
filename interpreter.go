@@ -18,10 +18,6 @@ var (
 	dstack []Data
 )
 
-type fNull struct{}
-
-func (_ fNull) run() {}
-
 type fBuiltin func()
 
 func (f fBuiltin) run() { f() }
