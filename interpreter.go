@@ -42,6 +42,15 @@ func (t fThread) run() {
 	}
 }
 
+type fCap struct {
+	place *fPush
+}
+
+func (c fCap) run() {
+	c.place.d = dstack[len(dstack)-1]
+	dstack = dstack[:len(dstack)-1]
+}
+
 type dNum int
 
 func (n dNum) String() string { return strconv.Itoa(int(n)) }
@@ -99,9 +108,9 @@ func (l pLambdaFunc) eval() Func {
 func (n pNamedFunc) eval() Func { return pLambdaFunc(n.inside).eval() }
 
 func (c pCap) eval() Func {
-	names[len(names)-1][string(c)] = fPush{dstack[len(dstack)-1]}
-	dstack = dstack[:len(dstack)-1]
-	return fNull{}
+	place := new(fPush)
+	names[len(names)-1][string(c)] = place
+	return fCap{place}
 }
 
 func process(a AST) {
