@@ -9,6 +9,10 @@ type Func interface {
 	run()
 }
 
+type Setter interface {
+	set(id uint64, val Data) Func
+}
+
 type Data interface {
 	String() string
 }
@@ -39,12 +43,39 @@ func (t fThread) run() {
 }
 
 type fCap struct {
-	place *fPush
+	id uint64
 }
 
 func (c fCap) run() {
-	c.place.d = dstack[len(dstack)-1]
+	val := dstack[len(dstack)-1]
 	dstack = dstack[:len(dstack)-1]
+	set(rstack, c.id, val)
+}
+
+type fCapped struct {
+	id uint64
+}
+
+func (_ fCapped) run() { panic("Unfilled capture") }
+
+func (c fCapped) set(id uint64, val Data) Func {
+	if c.id == id {
+		return fPush{val}
+	}
+	return c
+}
+
+type fLambda []Func
+
+func (l fLambda) run() {
+	dstack = append(dstack, dFunc{fThread(l)})
+}
+
+func (l fLambda) set(id uint64, val Data) Func {
+	ret := make(fLambda, len(l))
+	copy(ret, l)
+	set(ret, id, val)
+	return ret
 }
 
 type dNum int
@@ -101,14 +132,15 @@ func toThread(r []pFunc) fThread {
 	return compiled
 }
 
-func (l pLambdaFunc) eval() Func { return fPush{dFunc{toThread([]pFunc(l))}} }
+func (l pLambdaFunc) eval() Func { return fLambda(toThread([]pFunc(l))) }
 
 func (n pNamedFunc) eval() Func { return toThread([]pFunc(n.inside)) }
 
 func (c pCap) eval() Func {
-	place := new(fPush)
+	id := uniq()
+	place := fCapped{id}
 	names[len(names)-1][string(c)] = place
-	return fCap{place}
+	return fCap{id}
 }
 
 func process(a AST) {
@@ -129,5 +161,13 @@ func run() {
 		next := rstack[len(rstack)-1]
 		rstack = rstack[:len(rstack)-1]
 		next.run()
+	}
+}
+
+func set(st []Func, id uint64, val Data) {
+	for i, f := range st {
+		if s, ok := f.(Setter); ok {
+			st[i] = s.set(id, val)
+		}
 	}
 }
