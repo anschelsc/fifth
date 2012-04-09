@@ -1,9 +1,6 @@
-true(\(@_))
-false(\(@a @b a))
+true(\drop)
+false(\(swap drop))
 if(do do)
 and(dup do)
 or(over do)
 b.(@b \(1 .) \(0 .) b if)
-
-dup(@a a a)
-over(@a @b b a b)

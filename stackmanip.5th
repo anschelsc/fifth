@@ -1,0 +1,4 @@
+dup(@a a a)
+drop(@a)
+swap(@a @b a b)
+over(@a @b b a b)
