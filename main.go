@@ -11,7 +11,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 	}
 	for _, ch := range program {
-		ch.WriteTo(os.Stdout)
+		ch.writeTo(os.Stdout)
 		fmt.Printf(" ")
 	}
 }

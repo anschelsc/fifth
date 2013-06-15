@@ -7,7 +7,7 @@ import (
 )
 
 type chunk interface {
-	WriteTo(io.Writer) error
+	writeTo(io.Writer) error
 }
 
 type bangc struct{}
@@ -83,11 +83,11 @@ func writeByte(w io.Writer, b byte) error {
 	return nil
 }
 
-func (_ bangc) WriteTo(w io.Writer) error {
+func (_ bangc) writeTo(w io.Writer) error {
 	return writeByte(w, '!')
 }
 
-func (c capturec) WriteTo(w io.Writer) error {
+func (c capturec) writeTo(w io.Writer) error {
 	err := writeByte(w, '@')
 	if err != nil {
 		return err
@@ -96,17 +96,17 @@ func (c capturec) WriteTo(w io.Writer) error {
 	return err
 }
 
-func (i identc) WriteTo(w io.Writer) error {
+func (i identc) writeTo(w io.Writer) error {
 	_, err := io.WriteString(w, string(i))
 	return err
 }
 
-func (n numc) WriteTo(w io.Writer) error {
+func (n numc) writeTo(w io.Writer) error {
 	_, err := fmt.Fprintf(w, "%d", int(n))
 	return err
 }
 
-func (c closurec) WriteTo(w io.Writer) error {
+func (c closurec) writeTo(w io.Writer) error {
 	err := writeByte(w, '(')
 	if err != nil {
 		return err
@@ -121,7 +121,7 @@ func (c closurec) WriteTo(w io.Writer) error {
 				return err
 			}
 		}
-		err := ch.WriteTo(w)
+		err := ch.writeTo(w)
 		if err != nil {
 			return err
 		}
