@@ -1,7 +1,0 @@
-zero(\(@f))
-succ(@n \(@f f n do f do))
-count(@n 0 \(1 +) n do)
-c.(count .)
-plus(@n \succ n do)
-times(@n @m zero \(m plus) n do)
-exp(@n @m zero succ \(m times) n do)

@@ -1,129 +1,113 @@
 package main
 
 import (
+	"io"
+	"bufio"
 	"unicode"
+	"fmt"
 )
+
+type state func(chan<- token, rune) state
 
 type token struct {
-	k    kind
-	data []rune
+	tkind
+	val []rune
 }
 
-type kind uint8
+type tkind byte
 
 const (
-	kId kind = iota + 1
-	kClose
-	kFOpen // (named) function
-	kLOpen // lambda
-	kTOpen // type signature
-	kCap
-	kBS // backslash
+	AT tkind = iota
+	BANG
+	OPEN
+	CLOSE
+	NUM
+	IDENT
 )
 
-func (t *token) String() string {
-	if t == nil {
-		return "LEXER ERROR"
-	}
-	switch t.k {
-	case kId:
-		return string(t.data)
-	case kClose:
-		return ")"
-	case kFOpen:
-		return "("
-	case kLOpen:
-		return "\\("
-	case kTOpen:
-		return ":("
-	case kCap:
-		return "@"
-	case kBS:
-		return "\\"
-	}
-	panic("Bad token")
+func (k tkind) String() string {
+	return []string{
+		AT: "AT",
+		BANG: "BANG",
+		OPEN: "OPEN",
+		CLOSE: "CLOSE",
+		NUM: "NUM",
+		IDENT: "IDENT",
+	}[k]
 }
 
-type lexFunc func(rune, chan<- *token) lexFunc
+func (t token) String() string {
+	switch t.tkind {
+	case IDENT:
+		return fmt.Sprintf("IDENT(%s)", string(t.val))
+	case NUM:
+		return fmt.Sprintf("NUM(%d)", t.val[0])
+	}
+	return t.tkind.String()
+}
 
-func lex(source <-chan rune) <-chan *token {
-	output := make(chan *token)
+// token chan gets closed after all tokens are sent
+// after which a single error is sent on the error chan
+func lex(r io.Reader) (<-chan token, <-chan error) {
+	tch := make(chan token)
+	ech := make(chan error)
 	go func() {
-		f := lexMain
-		for r := range source {
-			f = f(r, output)
+		br := bufio.NewReader(r)
+		s := sstate
+		ru, _, err := br.ReadRune()
+		for ; err == nil; ru, _, err = br.ReadRune() {
+			s = s(tch, ru)
 		}
-		close(output)
+		close(tch)
+		if err == io.EOF {
+			err = nil
+		}
+		ech <- err
+		close(ech)
 	}()
-	return output
+	return tch, ech
 }
 
-func lexMain(r rune, output chan<- *token) lexFunc {
+func sstate(ch chan<- token, r rune) state {
 	if unicode.IsSpace(r) {
-		return lexMain
+		return sstate
 	}
 	switch r {
 	case '@':
-		output <- &token{kCap, nil}
-		return lexMain
+		ch <- token{tkind: AT}
+		return sstate
+	case '!':
+		ch <- token{tkind: BANG}
+		return sstate
 	case '(':
-		output <- &token{kFOpen, nil}
-		return lexMain
+		ch <- token{tkind: OPEN}
+		return sstate
 	case ')':
-		output <- &token{kClose, nil}
-		return lexMain
-	case ':':
-		return lexCol
-	case '\\':
-		return lexBS
-	case '#':
-		return lexComment
+		ch <- token{tkind: CLOSE}
+		return sstate
 	}
-	return lexBuf([]rune{r})
+	if '0' <= r && r <= '9' {
+		return nstate(r - '0')
+	}
+	return istate([]rune{r})
 }
 
-func lexBuf(buf []rune) lexFunc {
-	return func(r rune, output chan<- *token) lexFunc {
-		if unicode.IsSpace(r) {
-			output <- &token{kId, buf}
-			return lexMain
+func nstate(val rune) state {
+	return func(ch chan<- token, r rune) state {
+		if '0' <= r && r <= '9' {
+			return nstate(val*10 + (r - '0'))
 		}
-		switch r {
-		case '(', ')', '\\', '@', ':':
-			output <- &token{kId, buf}
-			return lexMain(r, output) // Note that we relex r
+		ch <- token{tkind: NUM, val: []rune{val}}
+		return sstate(ch, r)
+	}
+}
+
+func istate(val []rune) state {
+	return func(ch chan<- token, r rune) state {
+		if unicode.IsSpace(r) || r == '@' || r == '!' || r == '(' || r == ')' {
+			ch <- token{tkind: IDENT, val: val}
+			return sstate(ch, r)
 		}
-		return lexBuf(append(buf, r))
+		return istate(append(val, r))
 	}
-}
-
-func lexCol(r rune, output chan<- *token) lexFunc {
-	if unicode.IsSpace(r) {
-		return lexCol
-	}
-	if r == '(' {
-		output <- &token{kTOpen, nil}
-		return lexMain
-	}
-	output <- nil
-	return lexMain(r, output)
-}
-
-func lexBS(r rune, output chan<- *token) lexFunc {
-	if unicode.IsSpace(r) {
-		return lexBS
-	}
-	if r == '(' {
-		output <- &token{kLOpen, nil}
-		return lexMain
-	}
-	output <- &token{kBS, nil}
-	return lexMain(r, output)
-}
-
-func lexComment(r rune, _ chan<- *token) lexFunc {
-	if r == '\n' {
-		return lexMain
-	}
-	return lexComment
 }

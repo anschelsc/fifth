@@ -1,6 +1,0 @@
-true(\drop)
-false(\(swap drop))
-if(do do)
-and(dup do)
-or(over do)
-b.(@b \(1 .) \(0 .) b if)
