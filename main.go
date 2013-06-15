@@ -6,11 +6,12 @@ import (
 )
 
 func main() {
-	tch, ech := lex(os.Stdin)
-	for t := range tch {
-		fmt.Println(t)
-	}
-	if err := <-ech; err != nil {
+	program, err := parse(lex(os.Stdin))
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
+	}
+	for _, ch := range program {
+		ch.WriteTo(os.Stdout)
+		fmt.Printf(" ")
 	}
 }
