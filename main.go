@@ -10,8 +10,6 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
-	for _, ch := range program {
-		ch.writeTo(os.Stdout)
-		fmt.Printf(" ")
-	}
+	cl := &closure{todo: program, bindings: builtins}
+	cl.run(nil)
 }

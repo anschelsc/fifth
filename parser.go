@@ -1,13 +1,13 @@
 package main
 
 import (
-	"io"
 	"errors"
 	"fmt"
 )
 
 type chunk interface {
-	writeTo(io.Writer) error
+	unbound() []string
+	eval([]map[string]object) error
 }
 
 type bangc struct{}
@@ -18,7 +18,10 @@ type identc string
 
 type numc int
 
-type closurec []chunk
+type closurec struct {
+	chunks []chunk
+	_unbound []string
+}
 
 func parse(tch <-chan token, ech <-chan error) ([]chunk, error) {
 	ch, closed, err := parseInner(tch, ech)
@@ -57,7 +60,7 @@ func parseInner(tch <-chan token, ech <-chan error) ([]chunk, bool, error) {
 			ret = append(ret, bangc{})
 		case OPEN:
 			inner, closed, err := parseInner(tch, ech)
-			ret = append(ret, closurec(inner))
+			ret = append(ret, &closurec{chunks: inner})
 			if err != nil {
 				return ret, false, err
 			}
@@ -75,56 +78,33 @@ func parseInner(tch <-chan token, ech <-chan error) ([]chunk, bool, error) {
 	panic("unreachable")
 }
 
-func writeByte(w io.Writer, b byte) error {
-	n, err := w.Write([]byte{b})
-	if n != 1 {
-		return err
-	}
-	return nil
-}
+func (_ bangc) unbound() []string { return []string{} }
 
-func (_ bangc) writeTo(w io.Writer) error {
-	return writeByte(w, '!')
-}
+func (_ capturec) unbound() []string { return []string{} }
 
-func (c capturec) writeTo(w io.Writer) error {
-	err := writeByte(w, '@')
-	if err != nil {
-		return err
-	}
-	_, err = io.WriteString(w, string(c))
-	return err
-}
+func (i identc) unbound() []string { return []string{string(i)} }
 
-func (i identc) writeTo(w io.Writer) error {
-	_, err := io.WriteString(w, string(i))
-	return err
-}
+func (_ numc) unbound() []string { return []string{} }
 
-func (n numc) writeTo(w io.Writer) error {
-	_, err := fmt.Fprintf(w, "%d", int(n))
-	return err
-}
-
-func (c closurec) writeTo(w io.Writer) error {
-	err := writeByte(w, '(')
-	if err != nil {
-		return err
-	}
-	first := true
-	for _, ch := range c {
-		if first {
-			first = false
-		} else {
-			err := writeByte(w, ' ')
-			if err != nil {
-				return err
+func (c *closurec) unbound() []string {
+	if c._unbound == nil {
+		ret := make(map[string]struct{})
+		bound := make(map[string]struct{})
+		for _, ch := range c.chunks {
+			if capt, ok := ch.(capturec); ok {
+				bound[string(capt)] = struct{}{}
+			} else {
+				for _, s := range ch.unbound() {
+					if _, ok = bound[s]; !ok {
+						ret[s] = struct{}{}
+					}
+				}
 			}
 		}
-		err := ch.writeTo(w)
-		if err != nil {
-			return err
+		c._unbound = make([]string, 0, len(ret))
+		for s := range ret {
+			c._unbound = append(c._unbound, s)
 		}
 	}
-	return writeByte(w, ')')
+	return c._unbound
 }
