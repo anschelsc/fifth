@@ -19,7 +19,7 @@ type identc string
 type numc int
 
 type closurec struct {
-	chunks []chunk
+	chunks   []chunk
 	_unbound []string
 }
 

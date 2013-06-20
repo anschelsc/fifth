@@ -28,7 +28,7 @@ func (f builtin) run(context []map[string]object) error {
 }
 
 type closure struct {
-	todo []chunk
+	todo     []chunk
 	bindings map[string]object
 }
 

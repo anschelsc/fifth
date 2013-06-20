@@ -1,10 +1,10 @@
 package main
 
 import (
-	"io"
 	"bufio"
-	"unicode"
 	"fmt"
+	"io"
+	"unicode"
 )
 
 type state func(chan<- token, rune) state
@@ -27,11 +27,11 @@ const (
 
 func (k tkind) String() string {
 	return []string{
-		AT: "AT",
-		BANG: "BANG",
-		OPEN: "OPEN",
+		AT:    "AT",
+		BANG:  "BANG",
+		OPEN:  "OPEN",
 		CLOSE: "CLOSE",
-		NUM: "NUM",
+		NUM:   "NUM",
 		IDENT: "IDENT",
 	}[k]
 }
@@ -73,6 +73,8 @@ func sstate(ch chan<- token, r rune) state {
 		return sstate
 	}
 	switch r {
+	case '{':
+		return cstate(sstate)
 	case '@':
 		ch <- token{tkind: AT}
 		return sstate
@@ -92,8 +94,20 @@ func sstate(ch chan<- token, r rune) state {
 	return istate([]rune{r})
 }
 
+func cstate(s state) state {
+	return func(_ chan<- token, r rune) state {
+		if r == '}' {
+			return s
+		}
+		return cstate(s)
+	}
+}
+
 func nstate(val rune) state {
 	return func(ch chan<- token, r rune) state {
+		if r == '{' {
+			return cstate(nstate(val))
+		}
 		if '0' <= r && r <= '9' {
 			return nstate(val*10 + (r - '0'))
 		}
@@ -104,6 +118,9 @@ func nstate(val rune) state {
 
 func istate(val []rune) state {
 	return func(ch chan<- token, r rune) state {
+		if r == '{' {
+			return cstate(istate(val))
+		}
 		if unicode.IsSpace(r) || r == '@' || r == '!' || r == '(' || r == ')' {
 			ch <- token{tkind: IDENT, val: val}
 			return sstate(ch, r)

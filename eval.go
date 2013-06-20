@@ -33,7 +33,7 @@ func (c capturec) eval(context []map[string]object) error {
 	if len(stack) == 0 {
 		return emptyStack
 	}
-	context[len(context) - 1][string(c)] = pop()
+	context[len(context)-1][string(c)] = pop()
 	return nil
 }
 
