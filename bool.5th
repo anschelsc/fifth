@@ -1,0 +1,3 @@
+(drop! !) @true
+(swap! drop! !) @false
+(!) @if

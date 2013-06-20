@@ -1,0 +1,3 @@
+(@x x x) @dup
+(@_) @drop
+(@x @y x y) @swap
