@@ -9,7 +9,11 @@ func main() {
 	program, err := parse(lex(os.Stdin))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		return
 	}
 	cl := &closure{todo: program, bindings: builtins}
-	cl.run(nil)
+	err = cl.run(nil)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
 }
