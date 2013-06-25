@@ -1,3 +1,7 @@
 (drop! !) @true
 (swap! drop! !) @false
 (!) @if
+
+(@b (false) (true) b if!) @not
+
+(@b (1 .!) (0 .!) b if!) @b.

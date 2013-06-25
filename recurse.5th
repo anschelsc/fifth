@@ -1,1 +1,3 @@
 (@x (x x !)) @recurse
+
+(recurse!@self @n @f () (f! f n 1 -! self!) n zero?! if!) recurse!@times
