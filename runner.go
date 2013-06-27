@@ -16,6 +16,10 @@ func pop() object {
 
 type numo int
 
+type stringo []rune
+
+type charo rune
+
 type function interface {
 	object
 	run([]map[string]object) error

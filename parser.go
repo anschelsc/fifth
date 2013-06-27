@@ -18,6 +18,10 @@ type identc string
 
 type numc int
 
+type stringc []rune
+
+type charc rune
+
 type closurec struct {
 	chunks   []chunk
 	_unbound []string
@@ -73,6 +77,10 @@ func parseInner(tch <-chan token, ech <-chan error) ([]chunk, bool, error) {
 			ret = append(ret, numc(t.val[0]))
 		case IDENT:
 			ret = append(ret, identc(t.val))
+		case STRING:
+			ret = append(ret, stringc(t.val))
+		case CHAR:
+			ret = append(ret, charc(t.val[0]))
 		}
 	}
 	panic("unreachable")
@@ -85,6 +93,10 @@ func (_ capturec) unbound() []string { return []string{} }
 func (i identc) unbound() []string { return []string{string(i)} }
 
 func (_ numc) unbound() []string { return []string{} }
+
+func (_ stringc) unbound() []string { return []string{} }
+
+func (_ charc) unbound() []string { return []string{} }
 
 func (c *closurec) unbound() []string {
 	if c._unbound == nil {

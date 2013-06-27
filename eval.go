@@ -51,6 +51,16 @@ func (n numc) eval(_ []map[string]object) error {
 	return nil
 }
 
+func (s stringc) eval(_ []map[string]object) error {
+	push(stringo(s))
+	return nil
+}
+
+func (c charc) eval(_ []map[string]object) error {
+	push(charo(c))
+	return nil
+}
+
 func (c *closurec) eval(context []map[string]object) error {
 	bindings := make(map[string]object)
 	for _, id := range c.unbound() {

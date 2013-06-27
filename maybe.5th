@@ -1,0 +1,5 @@
+(drop! !) @nothing
+(@x (@f drop! x f!)) @just
+(!) @maybe
+
+(@m fail () m maybe!) @get_just

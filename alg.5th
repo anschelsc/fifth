@@ -1,0 +1,10 @@
+((@m fail () m maybe!) @get_just
+	@l (@n l n index! get_just! take-n! @args (
+		drop l len! n -! 1 -! times!
+		@f
+		drop n times!
+		args dump!
+		f!
+	))) @alg
+
+(!) @do_alg

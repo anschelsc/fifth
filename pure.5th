@@ -1,0 +1,60 @@
+[ 1 , 2 ] list! alg! @ast
+(0 ast!) @char
+(1 ast!) @block
+
+(recurse!@self @a c. ('` c.! swap! self! self!) a do_alg!) recurse!@write
+
+(recurse!@self @str str head! get_just! @h [
+     (h '` c=!) (str tail! self! @next @x next self! @rest x swap! block! rest) cons! ,
+     (h '  c=!) (str tail! self!) cons!
+ ] list!
+ (str head! get_just! char! str tail!)
+ switch!) recurse!@parse_inner
+
+(parse_inner! drop!) @parse
+
+[ 0 , 0 , 0 , 1 , 1 , 2 , 1 ] list! alg! @func
+(0 func!) @s
+(1 func!) @k
+(2 func!) @i
+(3 func!) @s1
+(4 func!) @k1
+(5 func!) @s2
+(6 func!) @dead
+
+(@f ('s char!)
+    ('k char!)
+    ('i char!)
+    (@x 's char! x block!)
+    (@x 'k char! x block!)
+    (@y @x 's char! x block! y block!)
+    ()
+ f do_alg!) @freeze
+
+(@apply* @eval*
+ (eval* apply* apply*!) @apply
+ (apply* eval* eval*!) @eval
+ @a @f (a s1!)
+       (a k1!)
+       (a eval!)
+       (a s2!)
+       (eval!)
+       (@y @x x eval! a apply! y a block! apply!)
+       (a block! dead!)
+ f do_alg!) @apply*
+
+(@eval* @apply*
+ (apply* eval* eval*!) @eval
+ (eval* apply* apply*!) @apply
+ @a (@c [
+         (c 's c=!) s cons! ,
+         (c 'k c=!) k cons! ,
+         (c 'i c=!) i cons!
+        ] list!
+        (c char! dead!)
+        switch!)
+    (@y @x x eval! y apply!)
+ a do_alg!) @eval*
+
+(eval* apply* apply*!) @apply
+(apply* eval* eval*!) @eval

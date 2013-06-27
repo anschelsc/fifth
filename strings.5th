@@ -1,0 +1,3 @@
+(@s s sLen! build! reverse! (1 -! s swap! sIndex!) map!) @string
+
+((dup! c.!) map!) @s.

@@ -1,0 +1,8 @@
+nothing @zero
+just @succ
+maybe @cdo
+(@n (true) (drop! false) n cdo!) @isZero
+(recurse!@self @n () (1 .! self!) n cdo!) recurse!@c.
+(recurse!@self @n () (@m succ! m self!) n cdo!) recurse!@c+
+(recurse!@self @n (drop! zero) (@m dup! m self! c+!) n cdo!) recurse!@c*
+(recurse!@self @n (zero succ!) (self! n c*!) n cdo!) recurse!@fact

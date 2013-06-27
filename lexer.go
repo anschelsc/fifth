@@ -23,6 +23,8 @@ const (
 	CLOSE
 	NUM
 	IDENT
+	STRING
+	CHAR
 )
 
 func (k tkind) String() string {
@@ -33,6 +35,8 @@ func (k tkind) String() string {
 		CLOSE: "CLOSE",
 		NUM:   "NUM",
 		IDENT: "IDENT",
+		STRING: "STRING",
+		CHAR: "CHAR",
 	}[k]
 }
 
@@ -42,6 +46,10 @@ func (t token) String() string {
 		return fmt.Sprintf("IDENT(%s)", string(t.val))
 	case NUM:
 		return fmt.Sprintf("NUM(%d)", t.val[0])
+	case STRING:
+		return fmt.Sprintf("STRING(%q)", string(t.val))
+	case CHAR:
+		return fmt.Sprintf("CHAR(%c)", t.val[0])
 	}
 	return t.tkind.String()
 }
@@ -87,6 +95,10 @@ func sstate(ch chan<- token, r rune) state {
 	case ')':
 		ch <- token{tkind: CLOSE}
 		return sstate
+	case '"':
+		return qstate([]rune{})
+	case '\'':
+		return chstate
 	}
 	if '0' <= r && r <= '9' {
 		return nstate(r - '0')
@@ -127,4 +139,38 @@ func istate(val []rune) state {
 		}
 		return istate(append(val, r))
 	}
+}
+
+func qstate(val []rune) state {
+	return func(ch chan<- token, r rune) state {
+		switch r {
+		case '"':
+			ch <- token{tkind: STRING, val: val}
+			return sstate
+		case '\\':
+			return bstate(val)
+		}
+		return qstate(append(val, r))
+	}
+}
+
+func bstate(val []rune) state {
+	return func(ch chan<- token, r rune) state {
+		switch r {
+		case '\\', '"':
+			return qstate(append(val, r))
+		case 'n':
+			return qstate(append(val, '\n'))
+		case 't':
+			return qstate(append(val, '\t'))
+		case '\n':
+			return qstate(val)
+		}
+		return qstate(append(val, unicode.ReplacementChar))
+	}
+}
+
+func chstate(ch chan<- token, r rune) state {
+	ch <- token{tkind: CHAR, val: []rune{r}}
+	return sstate
 }

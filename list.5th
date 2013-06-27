@@ -1,0 +1,45 @@
+{SCHEME:
+ a list is a maybe, with nothing as the empty list
+ and (just (head . tail)) as a non-empty list.
+ We can use maybe! to decide whether we've got the head or the tail.
+}
+
+nothing @empty
+(cons! just!) @lcons
+(@l (nothing) (car! just!) l maybe!) @head {Either just head or nothing}
+(@l (nothing) cdr l maybe!) @tail {A list--possibly empty}
+
+(recurse!@self @l (0) (cdr! self! 1 +!) l maybe!) recurse!@len
+
+((recurse!@self @to @from (to) (@from_cons from_cons cdr! from_cons car! to lcons! self!) from maybe!) recurse!@inner
+ empty inner!) @reverse
+
+(recurse!@self @f @l (empty) (@l_cons l_cons car! f! l_cons cdr! f self! lcons!) l maybe!) recurse!@map
+
+(recurse!@self @f @l (empty) (dup! car! @h cdr! f self! (h swap! lcons!) () h f! if!) l maybe!) recurse!@filter
+
+(recurse!@self @n (empty) (n n 1 -! self! lcons!) n zero?! if!) recurse!@build
+
+(recurse!@self @n head (tail! n 1 -! self!) n zero?! if!) recurse!@index
+
+{For a list of length n, (n take-n!) and dump should be inverses.}
+
+(recurse!@self @l () (dup! car! swap! cdr! self!) l maybe!) recurse!@dump
+
+(@n empty lcons n times!) @take-n
+
+{Syntactic sugar: [ a , b , c ] list! -- [ ] list! does NOT work, use empty}
+true @[
+false @,
+false @]
+((recurse!@self @b (empty) (@h self! h swap! lcons!) b if!) recurse!@inner
+ inner! reverse!) @list
+
+
+{List-based control structure: input is a list of (test . todo) pairs of functions and a default todo function}
+
+(recurse!@self @default @l default (@lpair lpair car! @front
+                                        (front cdr! !)
+                                        (lpair cdr! default self!)
+                                        front car! ! if!)
+                           l maybe!) recurse!@switch
