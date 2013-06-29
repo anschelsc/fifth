@@ -61,6 +61,17 @@
 
 (recurse!@self @c @a (c c=!) (c self! swap! c self! or!) a do_alg!) recurse!@contains
 
-(recurse!@self @c @a (@inner ('i char!) ('k char! inner char! block!) inner c c=! if!)
-                     (@y @x 's char! x c self! block! y c self! block!)
-                     a do_alg!) recurse!@eliminate
+(@a (drop! true) (drop! drop! false) a do_alg!) @is_char
+(is_char! not!) @is_block
+
+(recurse!@self @c @a ( (drop! 'i char!) {contains and is char => i}
+                       (@y @x (x) { x does not contain c and y is a char (so y is c) }
+                              ('s char! x c self! block! y c self! block!) { no optimization }
+                              x c contains! not! y is_char! and! if!)
+                       a do_alg!)
+                     ('k char! a block!) {does not contain => k}
+                     a c contains! if!) recurse!@eliminate_one
+
+(recurse!@self @cs @a (a)
+                      (@pair a pair cdr! self! pair car! eliminate_one!)
+                      cs maybe!) recurse!@eliminate
