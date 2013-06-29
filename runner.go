@@ -46,3 +46,14 @@ func (c *closure) run(context []map[string]object) error {
 	}
 	return nil
 }
+
+func run_dyn(cChan <-chan chunk, eChan <-chan error, bindings map[string]object) error {
+	context := []map[string]object{bindings, make(map[string]object)}
+	for ch := range cChan {
+		err := ch.eval(context)
+		if err != nil {
+			return err
+		}
+	}
+	return <-eChan
+}

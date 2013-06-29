@@ -27,63 +27,96 @@ type closurec struct {
 	_unbound []string
 }
 
-func parse(tch <-chan token, ech <-chan error) ([]chunk, error) {
-	ch, closed, err := parseInner(tch, ech)
-	if err != nil {
-		return nil, err
-	}
-	if closed {
-		return nil, errors.New("Unmatched ')'.")
-	}
-	return ch, nil
+type parseError struct {
+	err error
+	closed bool
 }
 
-func parseInner(tch <-chan token, ech <-chan error) ([]chunk, bool, error) {
-	var ret []chunk
-	for {
-		t, ok := <-tch
-		if !ok {
-			err := <-ech
-			return ret, false, err
+func parse(tch <-chan token, ech <-chan error) (<-chan chunk, <-chan error) {
+	cChan, eChan := parseInner(tch, ech)
+	outEChan := make(chan error)
+	go func() {
+		err := <-eChan
+		if err.err != nil {
+			outEChan <- err.err
+			return
 		}
-		switch t.tkind {
-		case AT:
-			t, ok = <-tch
+		if err.closed {
+			outEChan <- errors.New("Unmatched ')'.")
+			return
+		}
+		outEChan <- nil
+	}()
+	return cChan, outEChan
+}
+
+func parseInner(tch <-chan token, ech <-chan error) (<-chan chunk, <-chan *parseError) {
+	cChan := make(chan chunk)
+	eChan := make(chan *parseError)
+	go func() {
+		for {
+			t, ok := <-tch
 			if !ok {
+				close(cChan)
 				err := <-ech
-				if err == nil {
-					err = errors.New("Expected IDENT after AT; got EOF.")
+				eChan <- &parseError{err: err, closed: false}
+				return
+			}
+			switch t.tkind {
+			case AT:
+				t, ok = <-tch
+				if !ok {
+					close(cChan)
+					err := <-ech
+					if err == nil {
+						err = errors.New("Expected IDENT after AT; got EOF.")
+					}
+					eChan <- &parseError{err: err, closed: false}
+					return
 				}
-				return ret, false, err
+				if t.tkind != IDENT {
+					close(cChan)
+					eChan <- &parseError{err: fmt.Errorf("Expected IDENT after AT; got %s.", t), closed:false}
+					return
+				}
+				cChan <- capturec(t.val)
+			case BANG:
+				cChan <- bangc{}
+			case OPEN:
+				var inner []chunk
+				inner_cChan, inner_eChan := parseInner(tch, ech)
+				for ch := range inner_cChan {
+					inner = append(inner, ch)
+				}
+				cChan <- &closurec{chunks: inner}
+				err := <-inner_eChan
+				if err.err != nil {
+					close(cChan)
+					eChan <- err
+					return
+				}
+				if !err.closed {
+					close(cChan)
+					err.err = errors.New("Unmatched '('")
+					eChan <- err
+					return
+				}
+			case CLOSE:
+				close(cChan)
+				eChan <- &parseError{err: nil, closed: true}
+				return
+			case NUM:
+				cChan <- numc(t.val[0])
+			case IDENT:
+				cChan <- identc(t.val)
+			case STRING:
+				cChan <- stringc(t.val)
+			case CHAR:
+				cChan <- charc(t.val[0])
 			}
-			if t.tkind != IDENT {
-				return ret, false, fmt.Errorf("Expected IDENT after AT; got %s.", t)
-			}
-			ret = append(ret, capturec(t.val))
-		case BANG:
-			ret = append(ret, bangc{})
-		case OPEN:
-			inner, closed, err := parseInner(tch, ech)
-			ret = append(ret, &closurec{chunks: inner})
-			if err != nil {
-				return ret, false, err
-			}
-			if !closed {
-				return ret, false, errors.New("Unmatched '('")
-			}
-		case CLOSE:
-			return ret, true, nil
-		case NUM:
-			ret = append(ret, numc(t.val[0]))
-		case IDENT:
-			ret = append(ret, identc(t.val))
-		case STRING:
-			ret = append(ret, stringc(t.val))
-		case CHAR:
-			ret = append(ret, charc(t.val[0]))
 		}
-	}
-	panic("unreachable")
+	}()
+	return cChan, eChan
 }
 
 func (_ bangc) unbound() []string { return []string{} }
