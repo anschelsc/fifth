@@ -4,4 +4,8 @@
 
 (@b (false) (true) b if!) @not
 
+(@b (drop! true) () b if!) @or
+
+(@b () (drop! false) b if!) @and
+
 (@b (1 .!) (0 .!) b if!) @b.

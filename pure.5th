@@ -58,3 +58,9 @@
 
 (eval* apply* apply*!) @apply
 (apply* eval* eval*!) @eval
+
+(recurse!@self @c @a (c c=!) (c self! swap! c self! or!) a do_alg!) recurse!@contains
+
+(recurse!@self @c @a (@inner ('i char!) ('k char! inner char! block!) inner c c=! if!)
+                     (@y @x 's char! x c self! block! y c self! block!)
+                     a do_alg!) recurse!@eliminate
