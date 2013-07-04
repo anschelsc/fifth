@@ -1,3 +1,9 @@
-(recurse!@self @l (empty) (dup! car! @h cdr! (h %! 0 =! not!) filter! self! h swap! lcons!) l maybe!) recurse!@primify
+(@n (n %! zero?! not!) filter!) @filter_by
 
-(build! reverse! tail! primify!) @primes_to
+(recurse!@self @l ()
+                  (@t @h h t h filter_by! self! lcons!)
+                  l list_do!) recurse!@primify
+
+(build! reverse! tail! primify!) @primes
+
+(primes! (dup! .!) map!) @print_primes

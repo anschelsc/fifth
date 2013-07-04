@@ -6,17 +6,21 @@
 
 nothing @empty
 (cons! just!) @lcons
-(@l (nothing) (car! just!) l maybe!) @head {Either just head or nothing}
-(@l (nothing) cdr l maybe!) @tail {A list--possibly empty}
 
-(recurse!@self @l (0) (cdr! self! 1 +!) l maybe!) recurse!@len
+{ list_do applies either the first function if the list is empty or the second function to the head and tail if the list is non-empty }
+(@f @full_todo @empty_todo empty_todo (dup! car! swap! cdr! full_todo!) f maybe!) @list_do
 
-((recurse!@self @to @from (to) (@from_cons from_cons cdr! from_cons car! to lcons! self!) from maybe!) recurse!@inner
+(@l (nothing) (drop! just!) l list_do!) @head {Either just head or nothing}
+(@l (nothing) (swap! drop!) l list_do!) @tail {A list--possibly empty}
+
+(recurse!@self @l (0) (swap! drop! self! 1 +!) l list_do!) recurse!@len
+
+((recurse!@self @to @from (to) (swap! to lcons! self!) from list_do!) recurse! @inner
  empty inner!) @reverse
 
-(recurse!@self @f @l (empty) (@l_cons l_cons car! f! l_cons cdr! f self! lcons!) l maybe!) recurse!@map
+(recurse!@self @f @l (empty) (swap! f! swap! f self! lcons!) l list_do!) recurse!@map
 
-(recurse!@self @f @l (empty) (dup! car! @h cdr! f self! (h swap! lcons!) () h f! if!) l maybe!) recurse!@filter
+(recurse!@self @f @l (empty) (@t @h t f self! (h swap! lcons!) () h f! if!) l list_do!) recurse!@filter
 
 (recurse!@self @n (empty) (n n 1 -! self! lcons!) n zero?! if!) recurse!@build
 
@@ -24,7 +28,7 @@ nothing @empty
 
 {For a list of length n, (n take-n!) and dump should be inverses.}
 
-(recurse!@self @l () (dup! car! swap! cdr! self!) l maybe!) recurse!@dump
+(recurse!@self @l () self l list_do!) recurse!@dump
 
 (@n empty lcons n times!) @take-n
 
@@ -38,8 +42,8 @@ false @]
 
 {List-based control structure: input is a list of (test . todo) pairs of functions and a default todo function}
 
-(recurse!@self @default @l default (@lpair lpair car! @front
-                                        (front cdr! !)
-                                        (lpair cdr! default self!)
-                                        front car! ! if!)
-                           l maybe!) recurse!@switch
+(recurse!@self @default @l default
+                           (@t @h (h cdr! !)
+                                  (t default self!)
+                                  h car! ! if!)
+                           l list_do!) recurse!@switch
