@@ -29,14 +29,14 @@ const (
 
 func (k tkind) String() string {
 	return []string{
-		AT:    "AT",
-		BANG:  "BANG",
-		OPEN:  "OPEN",
-		CLOSE: "CLOSE",
-		NUM:   "NUM",
-		IDENT: "IDENT",
+		AT:     "AT",
+		BANG:   "BANG",
+		OPEN:   "OPEN",
+		CLOSE:  "CLOSE",
+		NUM:    "NUM",
+		IDENT:  "IDENT",
 		STRING: "STRING",
-		CHAR: "CHAR",
+		CHAR:   "CHAR",
 	}[k]
 }
 

@@ -6,16 +6,16 @@ import (
 )
 
 var builtins = map[string]object{
-	"fail":  builtin(fail),
-	".":     builtin(dot),
-	"+":     builtin(plus),
-	"_":     builtin(negate),
-	"zero?": builtin(isZero),
-	"%":     builtin(mod),
-	"c.": builtin(cDot),
-	"c=": builtin(cEq),
+	"fail":   builtin(fail),
+	".":      builtin(dot),
+	"+":      builtin(plus),
+	"_":      builtin(negate),
+	"zero?":  builtin(isZero),
+	"%":      builtin(mod),
+	"c.":     builtin(cDot),
+	"c=":     builtin(cEq),
 	"sIndex": builtin(sIndex),
-	"sLen": builtin(sLen),
+	"sLen":   builtin(sLen),
 }
 
 func fail(_ *world, _ []map[string]object) error {
@@ -118,7 +118,7 @@ func cEq(w *world, _ []map[string]object) error {
 	if !ok {
 		return errors.New("Only chars can be char-compared.")
 	}
-	if (c1 == c2) {
+	if c1 == c2 {
 		w.push(innerTrue)
 	} else {
 		w.push(innerFalse)

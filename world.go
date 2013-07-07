@@ -5,8 +5,8 @@ import (
 )
 
 type world struct {
-	stack []object
-	input io.Reader
+	stack  []object
+	input  io.Reader
 	output io.Writer
 }
 

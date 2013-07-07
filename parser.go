@@ -28,7 +28,7 @@ type closurec struct {
 }
 
 type parseError struct {
-	err error
+	err    error
 	closed bool
 }
 
@@ -76,7 +76,7 @@ func parseInner(tch <-chan token, ech <-chan error) (<-chan chunk, <-chan *parse
 				}
 				if t.tkind != IDENT {
 					close(cChan)
-					eChan <- &parseError{err: fmt.Errorf("Expected IDENT after AT; got %s.", t), closed:false}
+					eChan <- &parseError{err: fmt.Errorf("Expected IDENT after AT; got %s.", t), closed: false}
 					return
 				}
 				cChan <- capturec(t.val)
