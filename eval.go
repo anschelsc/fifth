@@ -1,4 +1,4 @@
-package main
+package fifth
 
 import (
 	"errors"
@@ -18,50 +18,50 @@ func search(context []map[string]object, ident string) (object, error) {
 	return nil, fmt.Errorf("Unbound identifier: %s.", ident)
 }
 
-func (_ bangc) eval(context []map[string]object) error {
-	if len(stack) == 0 {
+func (_ bangc) eval(w *world, context []map[string]object) error {
+	if len(w.stack) == 0 {
 		return emptyStack
 	}
-	f, ok := pop().(function)
+	f, ok := w.pop().(function)
 	if !ok {
 		return errors.New("Tried to run a non-function.")
 	}
-	return f.run(context)
+	return f.run(w, context)
 }
 
-func (c capturec) eval(context []map[string]object) error {
-	if len(stack) == 0 {
+func (c capturec) eval(w *world, context []map[string]object) error {
+	if len(w.stack) == 0 {
 		return emptyStack
 	}
-	context[len(context)-1][string(c)] = pop()
+	context[len(context)-1][string(c)] = w.pop()
 	return nil
 }
 
-func (id identc) eval(context []map[string]object) error {
+func (id identc) eval(w *world, context []map[string]object) error {
 	ob, err := search(context, string(id))
 	if err != nil {
 		return err
 	}
-	push(ob)
+	w.push(ob)
 	return nil
 }
 
-func (n numc) eval(_ []map[string]object) error {
-	push(numo(n))
+func (n numc) eval(w *world, _ []map[string]object) error {
+	w.push(numo(n))
 	return nil
 }
 
-func (s stringc) eval(_ []map[string]object) error {
-	push(stringo(s))
+func (s stringc) eval(w *world, _ []map[string]object) error {
+	w.push(stringo(s))
 	return nil
 }
 
-func (c charc) eval(_ []map[string]object) error {
-	push(charo(c))
+func (c charc) eval(w *world, _ []map[string]object) error {
+	w.push(charo(c))
 	return nil
 }
 
-func (c *closurec) eval(context []map[string]object) error {
+func (c *closurec) eval(w *world, context []map[string]object) error {
 	bindings := make(map[string]object)
 	for _, id := range c.unbound() {
 		ob, err := search(context, id)
@@ -70,6 +70,6 @@ func (c *closurec) eval(context []map[string]object) error {
 		}
 		bindings[id] = ob
 	}
-	push(&closure{todo: c.chunks, bindings: bindings})
+	w.push(&closure{todo: c.chunks, bindings: bindings})
 	return nil
 }

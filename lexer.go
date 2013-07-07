@@ -1,4 +1,4 @@
-package main
+package fifth
 
 import (
 	"bufio"
@@ -56,11 +56,11 @@ func (t token) String() string {
 
 // token chan gets closed after all tokens are sent
 // after which a single error is sent on the error chan
-func lex(r io.Reader) (<-chan token, <-chan error) {
+func (w *world) lex() (<-chan token, <-chan error) {
 	tch := make(chan token)
 	ech := make(chan error)
 	go func() {
-		br := bufio.NewReader(r)
+		br := bufio.NewReader(w.input)
 		s := sstate
 		ru, _, err := br.ReadRune()
 		for ; err == nil; ru, _, err = br.ReadRune() {

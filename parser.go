@@ -1,4 +1,4 @@
-package main
+package fifth
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 
 type chunk interface {
 	unbound() []string
-	eval([]map[string]object) error
+	eval(*world, []map[string]object) error
 }
 
 type bangc struct{}

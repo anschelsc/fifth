@@ -1,16 +1,14 @@
-package main
+package fifth
 
 type object interface {
 }
 
-var stack []object
+func (w *world) push(o object) { w.stack = append(w.stack, o) }
 
-func push(o object) { stack = append(stack, o) }
-
-func pop() object {
-	i := len(stack) - 1
-	ret := stack[i]
-	stack = stack[:i]
+func (w *world) pop() object {
+	i := len(w.stack) - 1
+	ret := w.stack[i]
+	w.stack = w.stack[:i]
 	return ret
 }
 
@@ -22,13 +20,13 @@ type charo rune
 
 type function interface {
 	object
-	run([]map[string]object) error
+	run(*world, []map[string]object) error
 }
 
-type builtin func([]map[string]object) error
+type builtin func(*world, []map[string]object) error
 
-func (f builtin) run(context []map[string]object) error {
-	return f(context)
+func (f builtin) run(w *world, context []map[string]object) error {
+	return f(w, context)
 }
 
 type closure struct {
@@ -36,10 +34,10 @@ type closure struct {
 	bindings map[string]object
 }
 
-func (c *closure) run(context []map[string]object) error {
+func (c *closure) run(w *world, context []map[string]object) error {
 	context = append(append(context, c.bindings), make(map[string]object))
 	for _, ch := range c.todo {
-		err := ch.eval(context)
+		err := ch.eval(w, context)
 		if err != nil {
 			return err
 		}
@@ -47,10 +45,10 @@ func (c *closure) run(context []map[string]object) error {
 	return nil
 }
 
-func run_dyn(cChan <-chan chunk, eChan <-chan error, bindings map[string]object) error {
+func (w *world) run_dyn(cChan <-chan chunk, eChan <-chan error, bindings map[string]object) error {
 	context := []map[string]object{bindings, make(map[string]object)}
 	for ch := range cChan {
-		err := ch.eval(context)
+		err := ch.eval(w, context)
 		if err != nil {
 			return err
 		}

@@ -1,4 +1,4 @@
-package main
+package fifth
 
 import (
 	"errors"
@@ -18,156 +18,156 @@ var builtins = map[string]object{
 	"sLen": builtin(sLen),
 }
 
-func fail(_ []map[string]object) error {
+func fail(_ *world, _ []map[string]object) error {
 	return errors.New("Call to fail.")
 }
 
-func dot(_ []map[string]object) error {
-	if len(stack) == 0 {
+func dot(w *world, _ []map[string]object) error {
+	if len(w.stack) == 0 {
 		return emptyStack
 	}
-	n, ok := pop().(numo)
+	n, ok := w.pop().(numo)
 	if !ok {
 		return errors.New("Only numbers can be dot-printed.")
 	}
-	_, err := fmt.Printf("%d\n", int(n))
+	_, err := fmt.Fprintf(w.output, "%d\n", int(n))
 	return err
 }
 
-func plus(_ []map[string]object) error {
-	if len(stack) < 2 {
+func plus(w *world, _ []map[string]object) error {
+	if len(w.stack) < 2 {
 		return emptyStack
 	}
-	n1, ok := pop().(numo)
+	n1, ok := w.pop().(numo)
 	if !ok {
 		return errors.New("Only numbers can be added.")
 	}
-	n2, ok := pop().(numo)
+	n2, ok := w.pop().(numo)
 	if !ok {
 		return errors.New("Only numbers can be added.")
 	}
-	push(n1 + n2)
+	w.push(n1 + n2)
 	return nil
 }
 
-func negate(_ []map[string]object) error {
-	if len(stack) == 0 {
+func negate(w *world, _ []map[string]object) error {
+	if len(w.stack) == 0 {
 		return emptyStack
 	}
-	n, ok := pop().(numo)
+	n, ok := w.pop().(numo)
 	if !ok {
 		return errors.New("Only numbers can be negated.")
 	}
-	push(-n)
+	w.push(-n)
 	return nil
 }
 
-func isZero(_ []map[string]object) error {
-	if len(stack) == 0 {
+func isZero(w *world, _ []map[string]object) error {
+	if len(w.stack) == 0 {
 		return emptyStack
 	}
-	n, ok := pop().(numo)
+	n, ok := w.pop().(numo)
 	if !ok {
 		return errors.New("Only numbers can be checked for zeroness.")
 	}
 	if n == 0 {
-		push(innerTrue)
+		w.push(innerTrue)
 	} else {
-		push(innerFalse)
+		w.push(innerFalse)
 	}
 	return nil
 }
 
-func mod(_ []map[string]object) error {
-	if len(stack) < 2 {
+func mod(w *world, _ []map[string]object) error {
+	if len(w.stack) < 2 {
 		return emptyStack
 	}
-	n1, ok := pop().(numo)
+	n1, ok := w.pop().(numo)
 	if !ok {
 		return errors.New("Mod is for numbers.")
 	}
-	n2, ok := pop().(numo)
+	n2, ok := w.pop().(numo)
 	if !ok {
 		return errors.New("Mod is for numbers.")
 	}
-	push(n2 % n1)
+	w.push(n2 % n1)
 	return nil
 }
 
-func cDot(_ []map[string]object) error {
-	if len(stack) == 0 {
+func cDot(w *world, _ []map[string]object) error {
+	if len(w.stack) == 0 {
 		return emptyStack
 	}
-	c, ok := pop().(charo)
+	c, ok := w.pop().(charo)
 	if !ok {
 		return errors.New("Only chars can be char-printed.")
 	}
-	_, err := fmt.Printf("%c", rune(c))
+	_, err := fmt.Fprintf(w.output, "%c", rune(c))
 	return err
 }
 
-func cEq(_ []map[string]object) error {
-	if len(stack) < 2 {
+func cEq(w *world, _ []map[string]object) error {
+	if len(w.stack) < 2 {
 		return emptyStack
 	}
-	c1, ok := pop().(charo)
+	c1, ok := w.pop().(charo)
 	if !ok {
 		return errors.New("Only chars can be char-compared.")
 	}
-	c2, ok := pop().(charo)
+	c2, ok := w.pop().(charo)
 	if !ok {
 		return errors.New("Only chars can be char-compared.")
 	}
 	if (c1 == c2) {
-		push(innerTrue)
+		w.push(innerTrue)
 	} else {
-		push(innerFalse)
+		w.push(innerFalse)
 	}
 	return nil
 }
 
-func sIndex(_ []map[string]object) error {
-	if len(stack) < 2 {
+func sIndex(w *world, _ []map[string]object) error {
+	if len(w.stack) < 2 {
 		return emptyStack
 	}
-	i, ok := pop().(numo)
+	i, ok := w.pop().(numo)
 	if !ok {
 		return errors.New("String index must be a number.")
 	}
-	s, ok := pop().(stringo)
+	s, ok := w.pop().(stringo)
 	if !ok {
 		return errors.New("Only strings can be string-indexed.")
 	}
-	push(charo(s[i]))
+	w.push(charo(s[i]))
 	return nil
 }
 
-func sLen(_ []map[string]object) error {
-	if len(stack) == 0 {
+func sLen(w *world, _ []map[string]object) error {
+	if len(w.stack) == 0 {
 		return emptyStack
 	}
-	s, ok := pop().(stringo)
+	s, ok := w.pop().(stringo)
 	if !ok {
 		return errors.New("Only strings have string length.")
 	}
-	push(numo(len(s)))
+	w.push(numo(len(s)))
 	return nil
 }
 
-var innerTrue = builtin(func(context []map[string]object) error {
-	if len(stack) < 2 {
+var innerTrue = builtin(func(w *world, context []map[string]object) error {
+	if len(w.stack) < 2 {
 		return emptyStack
 	}
-	pop()
-	return bangc.eval(bangc{}, context)
+	w.pop()
+	return bangc.eval(bangc{}, w, context)
 })
 
-var innerFalse = builtin(func(context []map[string]object) error {
-	if len(stack) < 2 {
+var innerFalse = builtin(func(w *world, context []map[string]object) error {
+	if len(w.stack) < 2 {
 		return emptyStack
 	}
-	f := pop()
-	pop()
-	push(f)
-	return bangc.eval(bangc{}, context)
+	f := w.pop()
+	w.pop()
+	w.push(f)
+	return bangc.eval(bangc{}, w, context)
 })
