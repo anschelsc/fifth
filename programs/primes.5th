@@ -1,9 +1,18 @@
+{ list num => filtered_list }
 (@n (n %! zero?! not!) filter!) @filter_by
 
-(recurse!@self @l ()
-                  (@t @h h t h filter_by! self! lcons!)
-                  l list_do!) recurse!@primify
+{ list => primified_list }
+(recurse!@self @list (empty) { empty list, nothing to do }
+                     (@tail @head { we start with the head and tail on the stack }
+                       head { put the head there for later }
+                       tail head filter_by! { filter multiples of head from tail }
+                       self! { recurse on the result } 
+                       lcons! { attach to the head from before }
+                     )
+                     list list_do!) recurse!@primify
 
+{ n => primes_to_n }
 (build! reverse! tail! primify!) @primes
 
+{ n => (primes to n are printed) }
 (primes! (dup! .!) map!) @print_primes

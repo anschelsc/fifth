@@ -9,6 +9,7 @@ var builtins = map[string]object{
 	"fail":   builtin(fail),
 	".":      builtin(dot),
 	"+":      builtin(plus),
+	"*":      builtin(times),
 	"_":      builtin(negate),
 	"zero?":  builtin(isZero),
 	"%":      builtin(mod),
@@ -47,6 +48,22 @@ func plus(w *world, _ []map[string]object) error {
 		return errors.New("Only numbers can be added.")
 	}
 	w.push(n1 + n2)
+	return nil
+}
+
+func times(w *world, _ []map[string]object) error {
+	if len(w.stack) < 2 {
+		return emptyStack
+	}
+	n1, ok := w.pop().(numo)
+	if !ok {
+		return errors.New("Only numbers can be multiplied.")
+	}
+	n2, ok := w.pop().(numo)
+	if !ok {
+		return errors.New("Only numbers can be multiplied.")
+	}
+	w.push(n1 * n2)
 	return nil
 }
 

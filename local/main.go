@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"fifth"
+	"github.com/anschelsc/fifth"
 )
 
 func main() {
